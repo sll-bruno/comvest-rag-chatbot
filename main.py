@@ -70,9 +70,33 @@ embedding = get_embeddings(chunks)
 import faiss
 import numpy as np
 
-dimension = len(embeddings[0])  # Get the embedding size
+dimension = len(embedding[0])  # Get the embedding size
 index = faiss.IndexFlatL2(dimension)
-index.add(np.array(embeddings))
+index.add(np.array(embedding))
+
+def retriver(query,chunks):
+    query_embedding = client.embeddings.create(
+        model="text-embedding-ada-002",
+        input = query
+    ).data[0].embedding
+
+    # Perform similarity search
+    distances, indices = index.search(np.array([query_embedding]), k=15)
+    relevant_chunks = [chunks[i] for i in indices[0]]
+    return relevant_chunks
+
+query = "o que é a Vault?"
+
+relevant_chunks = retriver(query,chunks)
+
+response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[
+        {"role": "system","content": "Você é um consultor de uma relevante empresa de assesoria em criptoativos brasileira chamada Vault Research. Como um importante assessor de investimentos, você conhece profundamente os processos internos da empresa e sua proposta de valor. Seu papel é instruir possiveis clientes em relação aos serviçõs prestados pela Vault. Um cliente entrou em contato com você pedindo informações sobre a empresa. Envie primeiro uma mensagem: ""Qual duvida você tem sobre a vault?"" para entender melhor a necessidade do cliente."},
+        {"role": "user", "content": f"Context: {relevant_chunks}\n\nQuery: {query}"}
+    ]
+)
+print(response.choices[0].message.content)
 
 """with open("extracted_text.txt", "w", encoding="utf-8") as file:
     for text in cleaned_content:
