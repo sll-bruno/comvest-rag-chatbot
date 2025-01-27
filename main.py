@@ -1,14 +1,20 @@
 import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-import os
-import openai
+import os 
 import re
 
 #Read the .env variables 
 load_dotenv()
-api_key = os.getenv('API_KEY')
+api_key = os.getenv('OPENAI_API_KEY')
 urls = ["https://vaultresearch.com.br/","https://www.vaultcapital.com.br/?utm_source=site"]
+
+# new
+from openai import OpenAI
+
+client = OpenAI(
+  api_key=os.environ['OPENAI_API_KEY'],  # this is also the default, it can be omitted
+)
 
 paragraphs = []
 headings = []
@@ -50,16 +56,23 @@ def text_chunker(text, max_length=5000):
 def get_embeddings(chunks):
     embedding = []
     for chunk in chunks:
-        response = openai.Embedding.create(
+        response = client.embeddings.create(
             model="text-embedding-ada-002",
             input=chunk
         )
-        print(response)
-        embeddings.append(response['data'][0]['embedding'])
-    return embeddings
+        embedding.append(response.data[0].embedding)
+    return embedding
 
 chunks = text_chunker(cleaned_content)
-get_embeddings(chunks)
+embedding = get_embeddings(chunks)
+#print(embedding)
+
+import faiss
+import numpy as np
+
+dimension = len(embeddings[0])  # Get the embedding size
+index = faiss.IndexFlatL2(dimension)
+index.add(np.array(embeddings))
 
 """with open("extracted_text.txt", "w", encoding="utf-8") as file:
     for text in cleaned_content:
