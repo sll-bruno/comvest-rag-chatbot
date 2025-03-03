@@ -101,7 +101,6 @@ class ComvestChatbot:
         
         response = self.chat.invoke(formatted_prompt)
         
-        print(response.content)
-        #return responde.content
+        return response.content
     
     
