@@ -32,6 +32,8 @@ content = loader.load()
 transformed_content = html2text.transform_documents(content)
 splitted_content = text_splitter.split_documents(transformed_content)
 
+print(content)
+
 vector_store = Chroma(
     collection_name = "example_collection",
     embedding_function = embeddings,
